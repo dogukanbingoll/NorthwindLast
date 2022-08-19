@@ -1,6 +1,8 @@
 package com.etiya.northwind.ServiceTestes;
 
+import com.etiya.northwind.Business.Abstracts.CustomerService;
 import com.etiya.northwind.Business.Concretes.CustomerManager;
+import com.etiya.northwind.Business.Responses.Customers.CustomerListResponse;
 import com.etiya.northwind.Business.requests.customers.CreateCustomerRequest;
 import com.etiya.northwind.DataAccess.Abstracts.CustomerRepository;
 import com.etiya.northwind.DataAccess.Abstracts.mapping.ModelMapperManager;
@@ -19,42 +21,47 @@ import org.modelmapper.ModelMapper;
 
 
 public class CustomerServiceTestes {
+    private final CreateCustomerRequest createCustomerRequest = new CreateCustomerRequest();
+    private final CustomerListResponse customerListResponse = new CustomerListResponse();
 
-
-    CustomerManager customerManager;
-
-    private CustomerRepository customerRepository;
+    private CustomerService customerService;
+    private ModelMapper modelMapper;
     private ModelMapperService modelMapperService;
+    private CustomerRepository customerRepository;
 
     @BeforeEach
-    public void setup(){
-        customerRepository= Mockito.mock(CustomerRepository.class);
-        modelMapperService=Mockito.mock(ModelMapperService.class);
-        customerManager=new CustomerManager(customerRepository,modelMapperService);
+    public void setup() {
+        modelMapper = new ModelMapper();
+        modelMapperService = new ModelMapperManager(modelMapper);
+        customerRepository = Mockito.mock(CustomerRepository.class);
+        customerService = new CustomerManager(customerRepository, modelMapperService);
 
     }
+
     @Test
-    public void testSaveCustomer(){
-/**
-*       Arrange----------------------------------------------------------------------
-**/
-        CreateCustomerRequest createCustomerRequestTest=new CreateCustomerRequest();
-        createCustomerRequestTest.setCustomerId("TEST-CUSTOMER_ID");
-        createCustomerRequestTest.setCompanyName("TEST-COMPANY_NAME");
-        createCustomerRequestTest.setContactName("TEST-CONTACT_NAME");
+    public void add_customer_test() {
+        customerService.addCustomer(createCustomerRequest);
+        Mockito.verify(customerRepository, Mockito.times(1)).save(Mockito.any());
+    }
+
+    @Test
+    public void update_customer_test() {
+        Customer expected = modelMapperService.forRequest().map(customerListResponse, Customer.class);
+        //Valkidasyon için
+        Mockito.when(customerRepository.save(Mockito.any())).thenReturn(expected);
+        customerService.updateCustomer(customerListResponse);
 
 
-/**
- *       Action------------------------------------------------------------------------
- **/
-        Mockito.when(modelMapperService.forRequest().map(createCustomerRequestTest,Customer.class)).thenReturn()
-/**
- *       Assert------------------------------------------------------------------------
- **/
-        Assertions.assertEquals(createCustomerRequestTest.getContactName());
+        Mockito.verify(customerRepository, Mockito.times(1)).save(Mockito.any());
+    }
 
+    @Test
+    public void delete_customer_test() {
+        customerService.deleteCustomer(Mockito.anyString());
 
-
+        Mockito.verify(customerRepository, Mockito.times(1)).deleteById(Mockito.anyString());
     }
 
 }
+
+
